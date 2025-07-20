@@ -1,0 +1,10 @@
+# PDF Viewer Application Dependencies
+
+# PDF processing
+PyMuPDF==1.23.8
+
+# Image processing
+Pillow==10.1.0
+
+# GUI framework (usually comes with Python)
+# tkinter (built-in with Python)
