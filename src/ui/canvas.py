@@ -16,6 +16,7 @@ class PDFCanvas:
         self.canvas_width = 800
         self.canvas_height = 600
         self.on_size_change: Optional[Callable] = None
+        self.on_page_change: Optional[Callable] = None  # Callback for automatic page navigation
         
         self._create_canvas_frame()
         self._create_canvas()
@@ -36,7 +37,7 @@ class PDFCanvas:
         """Create the main canvas."""
         self.canvas = tk.Canvas(
             self.canvas_frame, 
-            bg='#f0f0f0',  # Light gray background
+            bg='white',
             highlightthickness=0,
             relief='flat'
         )
@@ -102,7 +103,7 @@ class PDFCanvas:
             self.on_size_change(self.canvas_width, self.canvas_height)
     
     def _on_mousewheel(self, event):
-        """Handle mouse wheel scrolling."""
+        """Handle mouse wheel scrolling with automatic page navigation."""
         # Determine scroll direction and amount
         if event.delta:  # Windows
             delta = -1 * (event.delta / 120)
@@ -113,7 +114,30 @@ class PDFCanvas:
         else:
             return
         
-        # Scroll vertically
+        # Get current scroll position
+        current_y_top, current_y_bottom = self.canvas.yview()
+        
+        # Check if we're at the boundaries and should change pages
+        scroll_threshold = 0.05  # 5% threshold for page change
+        
+        if delta > 0:  # Scrolling down
+            if current_y_bottom >= (1.0 - scroll_threshold):
+                # At bottom, try to go to next page
+                if self.on_page_change:
+                    if self.on_page_change('next'):
+                        return  # Page changed, don't scroll
+                # If page didn't change, continue with normal scrolling
+        else:  # Scrolling up
+            if current_y_top <= scroll_threshold:
+                # At top, try to go to previous page
+                if self.on_page_change:
+                    if self.on_page_change('prev'):
+                        # When going to previous page, scroll to bottom
+                        self.canvas.after(10, lambda: self.canvas.yview_moveto(1.0))
+                        return  # Page changed
+                # If page didn't change, continue with normal scrolling
+        
+        # Normal scrolling
         self.canvas.yview_scroll(int(delta), "units")
     
     def _on_shift_mousewheel(self, event):
@@ -148,13 +172,14 @@ class PDFCanvas:
         self.pan_start_x = event.x
         self.pan_start_y = event.y
     
-    def display_image(self, image: ImageTk.PhotoImage, center: bool = True):
+    def display_image(self, image: ImageTk.PhotoImage, center: bool = True, from_scroll: bool = False):
         """
         Display an image on the canvas.
         
         Args:
             image (ImageTk.PhotoImage): The image to display
             center (bool): Whether to center the image in the canvas
+            from_scroll (bool): Whether this is from auto-scroll page change
         """
         # Clear canvas
         self.clear()
@@ -186,6 +211,10 @@ class PDFCanvas:
                 bbox[2] + padx, bbox[3] + pady
             )
             self.canvas.configure(scrollregion=scroll_region)
+        
+        # If this is from auto-scroll, provide visual feedback
+        if from_scroll:
+            self._show_page_transition_effect()
     
     def clear(self):
         """Clear the canvas and remove image references."""
@@ -234,6 +263,10 @@ class PDFCanvas:
         """Set callback for canvas size changes."""
         self.on_size_change = callback
     
+    def set_page_change_callback(self, callback: Callable):
+        """Set callback for automatic page navigation."""
+        self.on_page_change = callback
+    
     def highlight_search_results(self, results: list):
         """Highlight search results on the canvas."""
         # Remove previous highlights
@@ -247,3 +280,15 @@ class PDFCanvas:
                 outline='red', width=2, fill='yellow', stipple='gray50',
                 tags="search_highlight"
             )
+    
+    def _show_page_transition_effect(self):
+        """Show a subtle visual effect when changing pages automatically."""
+        # Create a temporary border effect
+        bbox = self.canvas.bbox("all")
+        if bbox:
+            border = self.canvas.create_rectangle(
+                bbox[0]-2, bbox[1]-2, bbox[2]+2, bbox[3]+2,
+                outline='#00ff00', width=3, tags="page_transition"
+            )
+            # Remove the border after a short time
+            self.canvas.after(300, lambda: self.canvas.delete("page_transition"))

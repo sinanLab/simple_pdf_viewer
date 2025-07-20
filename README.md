@@ -15,8 +15,9 @@ A feature-rich PDF viewer application built with Python and Tkinter, featuring a
 ### Advanced Features
 - **Page rotation** - Rotate pages by 90° increments
 - **Text search** - Search for text within PDF pages with highlighting
+- **Auto page navigation** - Scroll to page end automatically advances to next page
 - **Keyboard shortcuts** - Full keyboard navigation support
-- **Mouse wheel scrolling** - Smooth scrolling with mouse wheel
+- **Mouse wheel scrolling** - Smooth scrolling with mouse wheel and auto-page change
 - **Middle-button panning** - Drag to pan around large documents
 - **Status bar** - Real-time display of document and view information
 - **Professional UI** - Modern interface with organized toolbar sections
@@ -24,7 +25,9 @@ A feature-rich PDF viewer application built with Python and Tkinter, featuring a
 ### User Experience
 - **Responsive design** - Automatically adapts to window resizing
 - **Smooth scrolling** - Enhanced scrollbars with proper scroll regions
+- **Auto page navigation** - Scroll past page end to automatically go to next/previous page
 - **Centered display** - Pages are centered for optimal viewing
+- **Visual feedback** - Subtle effects for page transitions and status updates
 - **Memory efficient** - Proper image reference management
 - **Error handling** - Graceful error handling with user feedback
 
@@ -138,10 +141,15 @@ python src/app.py
 - **Shift+F3**: Find previous (planned)
 
 ### Mouse Controls
-- **Mouse Wheel**: Vertical scrolling
+- **Mouse Wheel**: Vertical scrolling with auto page navigation at boundaries
 - **Shift+Mouse Wheel**: Horizontal scrolling
 - **Middle Button Drag**: Pan around document
 - **Left Click**: Focus canvas for keyboard events
+
+### Auto Page Navigation
+- **Smart Scrolling**: When you scroll to the bottom of a page, the next scroll automatically goes to the next page
+- **Visual Feedback**: Brief green border effect when auto-navigating between pages
+- **Status Updates**: Status bar shows "Next page" or "Previous page" during auto-navigation
 
 ## 🎛️ Toolbar Sections
 

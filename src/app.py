@@ -54,6 +54,7 @@ class PDFViewerApp:
         
         # Canvas events
         self.canvas.set_size_change_callback(self._on_canvas_resize)
+        self.canvas.set_page_change_callback(self._on_auto_page_change)
         
         # Toolbar events - Navigation
         self.toolbar.set_prev_page_callback(self._prev_page)
@@ -123,6 +124,37 @@ class PDFViewerApp:
         # If in fit mode, recalculate and update display
         if self.pdf_handler.fit_mode in ["width", "height", "page"]:
             self._update_display()
+    
+    def _on_auto_page_change(self, direction: str) -> bool:
+        """
+        Handle automatic page changes from scrolling.
+        
+        Args:
+            direction (str): 'next' or 'prev'
+            
+        Returns:
+            bool: True if page was changed, False otherwise
+        """
+        if direction == 'next':
+            if self.pdf_handler.can_go_next():
+                self.pdf_handler.go_to_next_page()
+                self._update_display(from_auto_scroll=True)
+                self._update_ui_state()
+                self.status_bar.set_status("Next page")
+                # Clear status after 2 seconds
+                self.main_window.root.after(2000, lambda: self.status_bar.set_status("Ready"))
+                return True
+        elif direction == 'prev':
+            if self.pdf_handler.can_go_previous():
+                self.pdf_handler.go_to_previous_page()
+                self._update_display(from_auto_scroll=True)
+                self._update_ui_state()
+                self.status_bar.set_status("Previous page")
+                # Clear status after 2 seconds
+                self.main_window.root.after(2000, lambda: self.status_bar.set_status("Ready"))
+                return True
+        
+        return False
     
     def _open_pdf(self):
         """Handle open PDF action."""
@@ -289,13 +321,13 @@ class PDFViewerApp:
             self.current_search_index -= 1
             # Could implement highlighting of current result here
     
-    def _update_display(self):
+    def _update_display(self, from_auto_scroll: bool = False):
         """Update the PDF display."""
         image = self.pdf_handler.render_current_page()
         if image:
             # Center the image for better viewing
             center = self.pdf_handler.fit_mode in ["width", "height", "page"]
-            self.canvas.display_image(image, center=center)
+            self.canvas.display_image(image, center=center, from_scroll=from_auto_scroll)
     
     def _update_ui_state(self):
         """Update UI state based on current document state."""
